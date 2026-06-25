@@ -129,16 +129,13 @@ struct FeatherApp: App {
 				_ = DownloadManager.shared.startDownload(from: downloadURL)
 			}
 		} else {
-			if url.pathExtension == "ipa" || url.pathExtension == "tipa" {
-				if FileManager.default.isFileFromFileProvider(at: url) {
-					guard url.startAccessingSecurityScopedResource() else { return }
-					FR.handlePackageFile(url) { _ in }
-				} else {
-					FR.handlePackageFile(url) { _ in }
-				}
-				
-				return
-			}
+if url.pathExtension == "ipa" || url.pathExtension == "tipa" {
+    url.startAccessingSecurityScopedResource()
+    FR.handlePackageFile(url) { _ in
+        url.stopAccessingSecurityScopedResource()
+    }
+    return
+}
 		}
 	}
 }
