@@ -1,3 +1,26 @@
+      - name: Build IPA
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Feather.xcodeproj \
+            -scheme Feather \
+            -configuration Release \
+            -arch arm64 \
+            -sdk iphoneos \
+            -derivedDataPath /tmp/Feather \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=NO 2>&1 | tee /tmp/build.log || (tail -100 /tmp/build.log && exit 1)
+          mkdir -p Payload
+          mv "/tmp/Feather/Build/Products/Release-iphoneos/Feather.app" Payload/
+          chmod -R 0755 Payload/Feather.app
+          codesign --force --sign - --timestamp=none Payload/Feather.app
+          cp deps/* Payload/Feather.app/ || true
+          rm -rf Payload/Feather.app/_CodeSignature
+          mkdir -p packages
+          zip -r9 packages/Feather.ipa Payload
+Visas main.yml:
+
 name: Build Feather
 
 on:
@@ -23,6 +46,7 @@ jobs:
 
       - name: Build IPA
         run: |
+          set -o pipefail
           xcodebuild \
             -project Feather.xcodeproj \
             -scheme Feather \
@@ -32,7 +56,7 @@ jobs:
             -derivedDataPath /tmp/Feather \
             -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO \
-            ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=NO
+            ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=NO 2>&1 | tee /tmp/build.log || (tail -100 /tmp/build.log && exit 1)
           mkdir -p Payload
           mv "/tmp/Feather/Build/Products/Release-iphoneos/Feather.app" Payload/
           chmod -R 0755 Payload/Feather.app
